@@ -4,10 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import ru.SSidash.Kata.PreProject_3_1_2.service.UserServiceImpl;
+
+import java.security.Principal;
 
 
 @Controller
+@RequestMapping("/user")
 public class UserController {
     public final UserServiceImpl userServiceImpl;
 
@@ -17,14 +21,10 @@ public class UserController {
         this.userServiceImpl = userServiceImpl;
     }
 
-    @GetMapping ("/index")
-    public String loginPage () {
-        return "/index";
-    }
 
-    @GetMapping("/user")
-    public String findUser (Model model) {
-        model.addAttribute("user" , userServiceImpl.loadUserByUsername(userServiceImpl.getCurrentUsername()));
-        return "show";
+    @GetMapping
+    public String getUser(Principal principal, Model model) {
+        model.addAttribute("user", userServiceImpl.findByUsername(userServiceImpl.getCurrentUsername()));
+        return "user";
     }
 }

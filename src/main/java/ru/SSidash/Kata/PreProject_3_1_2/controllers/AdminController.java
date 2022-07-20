@@ -10,7 +10,8 @@ import ru.SSidash.Kata.PreProject_3_1_2.service.RoleServiceImpl;
 import ru.SSidash.Kata.PreProject_3_1_2.service.UserServiceImpl;
 
 
-import java.util.Collection;
+import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -26,40 +27,39 @@ public class AdminController {
     }
 
     @GetMapping
-    public String getAllUsers (Model model) {
+    public String getAllUsers(Principal principal, Model model) {
         model.addAttribute("allUsers", userServiceImpl.listUser());
+        model.addAttribute("admin", userServiceImpl.findByUsername(principal.getName()));
+        model.addAttribute("roles", roleServiceImpl.getRoleList());
         return "/admin";
     }
-    @GetMapping ("/delete/{id}")
-    public String deleteUser (@PathVariable ("id") int id) {
+
+    @PostMapping("/delete/{id}")
+    public String deleteUser(@PathVariable("id") int id) {
         userServiceImpl.removeUser(id);
         return "redirect:/admin";
     }
-    @GetMapping ("/update/{id}")
-    public String updateUserForm (@PathVariable ("id") int id, Model model) {
-        model.addAttribute("update", userServiceImpl.getUserById(id));
-        model.addAttribute("allRole", roleServiceImpl.getRoleList());
-        return "update";
-    }
-    @PostMapping ("/update")
-    public String updateUser (@ModelAttribute ("update") User user, @RequestParam ("roleList") List<String> role) {
-        user.setRoles(userServiceImpl.getSetOfRoles(role));
+
+    @PostMapping("/update/{id}")
+    public String update
+            (@ModelAttribute("user") User user, @PathVariable("id") int id, @RequestParam(name = "roles", required = false) String[] roles) {
+        List<Role> roles1 = new ArrayList<>();
+        if (roles == null) {
+            user.setRoles((List<Role>) userServiceImpl.getUserById(id).getRoles());
+        } else {
+            for (String role : roles) {
+                roles1.add(roleServiceImpl.getRoleById(id));
+                user.setRoles(roles1);
+            }
+        }
         userServiceImpl.updateUser(user);
         return "redirect:/admin";
     }
 
-    @GetMapping ("/registration")
-    public String registration (Model model) {
-        model.addAttribute("user", new User());
-        model.addAttribute("allRoles", roleServiceImpl.getRoleList());
-        return "registration";
-    }
-    @PostMapping ("/registration")
-    public String addUser (@ModelAttribute ("user") User user, @RequestParam ("role") List<String> role) {
-        Collection<Role> roleList = userServiceImpl.getSetOfRoles(role);
-        user.setRoles(roleList);
+    @PostMapping("/registration")
+    public String addUser(@ModelAttribute("user") User user, @RequestParam("roles") List<String> role) {
+        user.setRoles(userServiceImpl.getSetOfRoles(role));
         userServiceImpl.addUser(user);
         return "redirect:/admin";
     }
-
 }
